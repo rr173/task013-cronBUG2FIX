@@ -44,6 +44,11 @@ func decodeJSON(r *http.Request, v any) error {
 	if err := dec.Decode(v); err != nil {
 		return fmt.Errorf("%w: %v", ErrBadJSON, err)
 	}
+	// 第一个对象解码成功后，若流中还有后续数据（如拼接的第二个 JSON
+	// 对象或尾随垃圾），视为非法请求体：单次请求只接受一个 JSON 对象。
+	if dec.More() {
+		return fmt.Errorf("%w: 请求体包含多个 JSON 对象", ErrBadJSON)
+	}
 	return nil
 }
 
